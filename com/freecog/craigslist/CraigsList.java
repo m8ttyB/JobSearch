@@ -284,14 +284,7 @@ public class CraigsList {
 	}
 
 	public static void main(String args[]) {
-		// erin's jobs - non-telecommuting
-		String[] erinSearch = {"sex educator", "sexuality educator", "sexual health educator"};
-		String erinDir = "/home/matt/public_html/erin_jobs/";
-		
-		CraigsList erin = new CraigsList(erinDir);
-		erin.findAllJobsGlobally(erinSearch, false);
-		
-		// matt's jobs - telecommuting
+		// matt's telecommuting job search
 		String[] mattSearch = {"qa", "software tester", "automated testing"};
 		String mattDir = "/home/matt/public_html/matt_jobs/";
 		
