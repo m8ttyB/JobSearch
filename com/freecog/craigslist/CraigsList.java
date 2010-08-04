@@ -39,18 +39,10 @@ public class CraigsList {
 	 */
 	public CraigsList(String directory) {
 		_directory = directory;
+		resetStatsCounter();
 		loadCountryCodes();
 	}
 
-	/**
-	 * Initialize the counters to zero.
-	 */
-	private void resetStatsCounter() {
-		_sitesSearched = 0;
-		_sitesWithResults = 0;
-		_resultsFound = 0;
-	}
-	
 	/**
 	 * <p>Search for jobs all over the world. Creates a html page for each search
 	 * term in the String[] and each country that was searched.</p>
@@ -102,43 +94,6 @@ public class CraigsList {
 		return country + "_" + term.replace(" ", "_") + "_job_results.html";
 	}
 	
-	private String getSearchStats() {
-		return "Sites seached: " + _sitesSearched +
-				" | Sites with results: " + _sitesWithResults +
-				" | Results found: " + _resultsFound;
-	}
-	
-	/**
-	 * Does a Global/Worldwide search for jobs on Craigslist
-	 * 
-	 * @param searchTerms The search terms to be used.
-	 * @param searchType Specifies the resource to search for. 
-	 * 			Examples: ALL_JOBS, SOFTWARE_JOBS, WEB_JOBS
-	 * @param telecommute True, find only telecommute jobs. False find all jobs
-	 * 			including telecommute jobs.
-	 */
-	private void searchAllCountries(String[] searchTerms,
-									String searchType,
-									boolean telecommute) {
-		resetStatsCounter();
-		for(String country : _countryCodes.keySet()) {
-			System.out.println("\n\nCountry: " + country + "\n\n");
-			String url = BASE_URL + _countryCodes.get(country);
-			for(String searchTerm : searchTerms) {
-				String fileName = createFileName(searchTerm, country);
-				writePageHeader(searchTerm, fileName);
-				
-				StringBuffer results = doJobSearch(searchTerm, telecommute, url, searchType);
-				String stats = "<h3>" + getSearchStats() + "</h3>\n";
-				
-				writeToFile(stats, fileName);
-				writeToFile(results.toString(), fileName);
-				resetStatsCounter();
-				writePageTail(fileName);
-			}
-		}
-	}
-	
 	/**
  	 * @param searchTerm Search field value
 	 * @param telecommuteJobs True, look for only telecommute jobs.
@@ -165,6 +120,29 @@ public class CraigsList {
 			results.append( getAllLinksFromParagraphs(driver) );
 		}
 		
+		return results;
+	}
+
+	/**
+	 * Finds all of the links on http://geo.craigslist.org/iso/us 
+	 * starter page except for: "craigslist", "w", and "or suggest 
+	 * a new one" links.
+	 * 
+	 * @param driver A WebDriver object instantiated to a webpage.
+	 * @return An list of all URIs on the webpage.
+	 */
+	private ArrayList<String> findAllLinks(WebDriver driver) {
+		ArrayList<String> results = new ArrayList<String>();
+		List<WebElement> hrefs = driver.findElements(By.tagName("a"));
+		for (WebElement href : hrefs) {
+			String text = href.getText();
+			if (!text.equals("craigslist") && !text.equals("w")
+					&& !text.equals("or suggest a new one")) {
+				String link = getURI(href.toString());
+				results.add(link);
+			}
+		}
+
 		return results;
 	}
 	
@@ -197,6 +175,12 @@ public class CraigsList {
 		
 		return results;
 	}
+	
+	private String getSearchStats() {
+		return "Sites seached: " + _sitesSearched +
+				" | Sites with results: " + _sitesWithResults +
+				" | Results found: " + _resultsFound;
+	}
 
 	/**
 	 * Pulls out the URI from an <a href> tag.
@@ -211,28 +195,6 @@ public class CraigsList {
 		return href;
 	}
 
-	/**
-	 * Finds all of the links on http://geo.craigslist.org/iso/us 
-	 * starter page except for: "craigslist", "w", and "or suggest 
-	 * a new one" links.
-	 * 
-	 * @param driver A WebDriver object instantiated to a webpage.
-	 * @return An list of all URIs on the webpage.
-	 */
-	private ArrayList<String> findAllLinks(WebDriver driver) {
-		ArrayList<String> results = new ArrayList<String>();
-		List<WebElement> hrefs = driver.findElements(By.tagName("a"));
-		for (WebElement href : hrefs) {
-			String text = href.getText();
-			if (!text.equals("craigslist") && !text.equals("w")
-					&& !text.equals("or suggest a new one")) {
-				String link = getURI(href.toString());
-				results.add(link);
-			}
-		}
-
-		return results;
-	}
 
 	/**
 	 * Initializes the country codes HashMap
@@ -248,6 +210,45 @@ public class CraigsList {
 		_countryCodes.put("USA", "us");
 	}
 	
+	/**
+	 * Initialize the counters to zero.
+	 */
+	private void resetStatsCounter() {
+		_sitesSearched = 0;
+		_sitesWithResults = 0;
+		_resultsFound = 0;
+	}
+	
+	/**
+	 * Does a Global/Worldwide search for jobs on Craigslist
+	 * 
+	 * @param searchTerms The search terms to be used.
+	 * @param searchType Specifies the resource to search for. 
+	 * 			Examples: ALL_JOBS, SOFTWARE_JOBS, WEB_JOBS
+	 * @param telecommute True, find only telecommute jobs. False find all jobs
+	 * 			including telecommute jobs.
+	 */
+	private void searchAllCountries(String[] searchTerms,
+									String searchType,
+									boolean telecommute) {
+		resetStatsCounter();
+		for(String country : _countryCodes.keySet()) {
+			System.out.println("\n\nCountry: " + country + "\n\n");
+			String url = BASE_URL + _countryCodes.get(country);
+			for(String searchTerm : searchTerms) {
+				String fileName = createFileName(searchTerm, country);
+				writePageHeader(searchTerm, fileName);
+				
+				StringBuffer results = doJobSearch(searchTerm, telecommute, url, searchType);
+				String stats = "<h3>" + getSearchStats() + "</h3>\n";
+				
+				writeToFile(stats, fileName);
+				writeToFile(results.toString(), fileName);
+				resetStatsCounter();
+				writePageTail(fileName);
+			}
+		}
+	}
 	
 	/**
 	 * Write the top of the html page.
